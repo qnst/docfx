@@ -97,7 +97,8 @@ steps:
     FolderPath: '$(Build.SourcesDirectory)/target/Release'
     Pattern: |
         **\*.dll
-        !**\Microsoft.DocAsCode.*.dll
+        !**\System.*.dll
+        !**\Microsoft.*.dll
     UseMinimatch: true
     signConfigType: inlineSignParams
     inlineOperation: |
