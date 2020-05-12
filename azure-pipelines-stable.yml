@@ -99,7 +99,7 @@ steps:
         **\*.dll
         !**\System.*.dll
         !**\Microsoft.*.dll
-        !**\Nuget.*.dll
+        !**\NuGet.*.dll
         !**\FSharp.Core.*.dll
     UseMinimatch: true
     signConfigType: inlineSignParams
