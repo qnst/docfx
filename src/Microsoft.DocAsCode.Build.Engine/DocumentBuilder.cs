@@ -194,7 +194,7 @@ namespace Microsoft.DocAsCode.Build.Engine
 
                         using (new LoggerPhaseScope("BuildCore"))
                         {
-                            manifests.Add(BuildCore(parameter, markdownServiceProvider, currentBuildInfo, lastBuildInfo));
+                            manifests.Add(BuildCore(parameter, markdownServiceProvider, currentBuildInfo, lastBuildInfo, falBuilder));
                         }
                     }
                 }
@@ -349,7 +349,7 @@ namespace Microsoft.DocAsCode.Build.Engine
             }
         }
 
-        internal Manifest BuildCore(DocumentBuildParameters parameter, IMarkdownServiceProvider markdownServiceProvider, BuildInfo currentBuildInfo, BuildInfo lastBuildInfo)
+        internal Manifest BuildCore(DocumentBuildParameters parameter, IMarkdownServiceProvider markdownServiceProvider, BuildInfo currentBuildInfo, BuildInfo lastBuildInfo, FileAbstractLayerBuilder falBuilder = null)
         {
             using var builder = new SingleDocumentBuilder
             {
@@ -360,7 +360,7 @@ namespace Microsoft.DocAsCode.Build.Engine
                 Processors = Processors,
                 MarkdownServiceProvider = markdownServiceProvider,
             };
-            return builder.Build(parameter);
+            return builder.Build(parameter, falBuilder);
         }
 
         private List<IDocumentProcessor> LoadSchemaDrivenDocumentProcessors(DocumentBuildParameters parameter)

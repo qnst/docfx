@@ -20,6 +20,7 @@ namespace Microsoft.DocAsCode.Build.SchemaDriven
     using Microsoft.DocAsCode.MarkdigEngine;
     using Microsoft.DocAsCode.Plugins;
     using System.Diagnostics;
+    using System.Collections.Concurrent;
 
     public class SchemaDrivenDocumentProcessor
         : DisposableDocumentProcessor, ISupportIncrementalDocumentProcessor
@@ -35,6 +36,8 @@ namespace Microsoft.DocAsCode.Build.SchemaDriven
         #endregion
 
         public SchemaValidator SchemaValidator { get; }
+
+        public ConcurrentDictionary<string, string> _checkTime = new ConcurrentDictionary<string, string>();
         #region Constructors
 
         public SchemaDrivenDocumentProcessor(
@@ -178,9 +181,8 @@ namespace Microsoft.DocAsCode.Build.SchemaDriven
                                 EnvironmentContext.FileAbstractLayer.GetPhysicalPath(markdownFragmentsFile));
                         }
                         time += $"\t{watch.Elapsed}";
-                        
-                        var manifestProperties = (IDictionary<string, object>)fm.ManifestProperties;
-                        manifestProperties["CheckSDPLoadTime"] = time;
+                        _checkTime.TryAdd(file.File, time);
+
                         return fm;
                     }
                     catch (YamlDotNet.Core.YamlException e)

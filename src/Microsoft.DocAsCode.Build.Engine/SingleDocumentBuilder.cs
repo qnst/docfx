@@ -12,6 +12,7 @@ namespace Microsoft.DocAsCode.Build.Engine
     using Microsoft.DocAsCode.Common;
     using Microsoft.DocAsCode.Exceptions;
     using Microsoft.DocAsCode.Plugins;
+    using Microsoft.DocAsCode.Build.SchemaDriven;
 
     public class SingleDocumentBuilder : IDisposable
     {
@@ -49,7 +50,7 @@ namespace Microsoft.DocAsCode.Build.Engine
             return hostService.Models;
         }
 
-        public Manifest Build(DocumentBuildParameters parameters)
+        public Manifest Build(DocumentBuildParameters parameters, FileAbstractLayerBuilder falBuilder = null)
         {
             if (parameters == null)
             {
@@ -72,10 +73,10 @@ namespace Microsoft.DocAsCode.Build.Engine
                 parameters.Metadata = ImmutableDictionary<string, object>.Empty;
             }
 
-            return BuildCore(parameters);
+            return BuildCore(parameters, falBuilder);
         }
 
-        private Manifest BuildCore(DocumentBuildParameters parameters)
+        private Manifest BuildCore(DocumentBuildParameters parameters, FileAbstractLayerBuilder falBuilder = null)
         {
             using (new LoggerPhaseScope(PhaseName, LogLevel.Verbose))
             {
@@ -112,7 +113,7 @@ namespace Microsoft.DocAsCode.Build.Engine
                     }
                     using (new LoggerPhaseScope("Load", LogLevel.Verbose))
                     {
-                        hostServices = GetInnerContexts(parameters, Processors, templateProcessor, hostServiceCreator);
+                        hostServices = GetInnerContexts(parameters, Processors, templateProcessor, hostServiceCreator, falBuilder);
                     }
 
                     BuildCore(phaseProcessor, hostServices, context);
@@ -179,7 +180,8 @@ namespace Microsoft.DocAsCode.Build.Engine
             DocumentBuildParameters parameters,
             IEnumerable<IDocumentProcessor> processors,
             TemplateProcessor templateProcessor,
-            IHostServiceCreator creator)
+            IHostServiceCreator creator,
+            FileAbstractLayerBuilder falBuilder)
         {
             var files = (from file in parameters.Files.EnumerateFiles().AsParallel().WithDegreeOfParallelism(parameters.MaxParallelism)
                          from p in (from processor in processors
@@ -207,21 +209,49 @@ namespace Microsoft.DocAsCode.Build.Engine
 
             try
             {
-                return (from processor in processors.AsParallel().WithDegreeOfParallelism(parameters.MaxParallelism)
-                        join item in toHandleItems.AsParallel() on processor equals item.Key into g
-                        from item in g.DefaultIfEmpty()
-                        where item != null && item.Any(s => s.Type != DocumentType.Overwrite) // when normal file exists then processing is needed
-                        select LoggerPhaseScope.WithScope(
-                            processor.Name,
-                            LogLevel.Verbose,
-                            () => creator.CreateHostService(
-                                parameters,
-                                templateProcessor,
-                                MarkdownService,
-                                MetadataValidators,
-                                processor,
-                                item)
-                                )).ToList();
+                var hostServices = (from processor in processors.AsParallel().WithDegreeOfParallelism(parameters.MaxParallelism)
+                                    join item in toHandleItems.AsParallel() on processor equals item.Key into g
+                                    from item in g.DefaultIfEmpty()
+                                    where item != null && item.Any(s => s.Type != DocumentType.Overwrite) // when normal file exists then processing is needed
+                                    select LoggerPhaseScope.WithScope(
+                                        processor.Name,
+                                        LogLevel.Verbose,
+                                        () => creator.CreateHostService(
+                                            parameters,
+                                            templateProcessor,
+                                            MarkdownService,
+                                            MetadataValidators,
+                                            processor,
+                                            item)
+                                            )).ToList();
+
+                EnvironmentContext.FileAbstractLayerImpl = FileAbstractLayerBuilder.Default
+                        .ReadFromRealFileSystem(parameters.OutputBaseDir)
+                        .WriteToRealFileSystem(parameters.OutputBaseDir)
+                        .Create();
+
+                var outputSDPLogs = (from processor in processors.AsParallel().WithDegreeOfParallelism(parameters.MaxParallelism)
+                                     where processor is SchemaDrivenDocumentProcessor
+                                     let sdp = (SchemaDrivenDocumentProcessor)processor
+                                     select Output(sdp)).ToList();
+
+                if (parameters.LruSize == 22)
+                {
+                    throw new Exception("force stop docfx build for test");
+                }
+
+                EnvironmentContext.FileAbstractLayerImpl = falBuilder.Create();
+
+                return hostServices;
+
+                static bool Output(SchemaDrivenDocumentProcessor sdp)
+                {
+                    if (sdp._checkTime.Count > 0)
+                    {
+                        JsonUtility.Serialize($"check-load-time-{sdp.Name}.json", sdp._checkTime, Newtonsoft.Json.Formatting.Indented);
+                    }
+                    return true;
+                }
             }
             catch (AggregateException ex)
             {
