@@ -214,7 +214,7 @@ gulp.task("syncBranchCore", () => {
 });
 gulp.task("dev", gulp.series("clean", "build", "e2eTest"));
 gulp.task("dev:build", gulp.series("clean", "build", "e2eTest"));
-gulp.task("dev:release", gulp.series("pack", "publish:azdevops-perf-login", "publish:azdevops-perf", "publish:azdevops-internal-login", "publish:azdevops-internal", "publish:azdevops-ppe-login", "publish:azdevops-ppe"));
+gulp.task("dev:release", gulp.series("pack", "publish:azdevops-perf-login", "publish:azdevops-perf"));
 
 gulp.task("master:build", gulp.series("clean", "build:release", "e2eTest", "updateGhPage"));
 gulp.task("master:pack", gulp.series("pack"));
