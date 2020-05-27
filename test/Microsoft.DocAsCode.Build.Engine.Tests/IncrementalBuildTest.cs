@@ -5577,8 +5577,8 @@ tagRules : [
 
         private static bool CompareFile(DirectoryInfo path1, DirectoryInfo path2)
         {
-            var files1 = path1.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(f => f.Name != "xrefmap.yml" && f.Name != "manifest.json").OrderBy(f => f.Name).ToList();
-            var files2 = path2.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(f => f.Name != "xrefmap.yml" && f.Name != "manifest.json").OrderBy(f => f.Name).ToList();
+            var files1 = path1.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(f => f.Name != "xrefmap.yml" && f.Name != "manifest.json" && f.Name != "check-load-time-Test.json").OrderBy(f => f.Name).ToList();
+            var files2 = path2.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(f => f.Name != "xrefmap.yml" && f.Name != "manifest.json" && f.Name != "check-load-time-Test.json").OrderBy(f => f.Name).ToList();
             if (files1.Count != files2.Count)
             {
                 Console.WriteLine($"File count in two directories don't match! path: ({path1}): {string.Join(";", files1)}. ({path2}): {string.Join(";", files2)}");
