@@ -1,5 +1,9 @@
 param ([switch]$noTest = $false)
 
+Write-Host "#####################################################################################################################"
+Write-Host "this is from REGRESSION branch"
+Write-Host "#####################################################################################################################"
+
 function exec([string] $cmd) {
     Write-Host $cmd -ForegroundColor Green
     & ([scriptblock]::Create($cmd))
