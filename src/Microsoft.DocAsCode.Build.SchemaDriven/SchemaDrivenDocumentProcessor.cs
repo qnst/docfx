@@ -114,28 +114,31 @@ namespace Microsoft.DocAsCode.Build.SchemaDriven
                     // TODO: Support dynamic in YAML deserializer
                     try
                     {
-                        time += $"\t{watch.Elapsed}";
+                        time += $"beforeDeserialize-{watch.Elapsed.TotalMilliseconds}";
                         // MUST be a dictionary
                         var obj = YamlUtility.Deserialize<Dictionary<string, object>>(file.File);
-                        time += $"\t{watch.Elapsed}";
+                        time += $" afterDeserialize-{watch.Elapsed.TotalMilliseconds}";
 
                         // load overwrite fragments
                         string markdownFragmentsContent = null;
                         var markdownFragmentsFile = file.File + ".md";
                         if (_folderRedirectionManager != null)
                         {
+                            time += $" beforeGetRedirectedPath-{watch.Elapsed.TotalMilliseconds}";
                             markdownFragmentsFile = _folderRedirectionManager.GetRedirectedPath((RelativePath)markdownFragmentsFile).ToString();
+                            time += $" afterGetRedirectedPath-{watch.Elapsed.TotalMilliseconds}";
                         }
+                        time += $" beforeFileExists-{watch.Elapsed.TotalMilliseconds}";
                         if (EnvironmentContext.FileAbstractLayer.Exists(markdownFragmentsFile))
                         {
                             markdownFragmentsContent = EnvironmentContext.FileAbstractLayer.ReadAllText(markdownFragmentsFile);
                         }
                         else
                         {
-                            time += $"\t{watch.Elapsed}";
+                            time += $" beforeSchemaValidate-{watch.Elapsed.TotalMilliseconds}";
                             // Validate against the schema first, only when markdown fragments don't exist
                             SchemaValidator.Validate(obj);
-                            time += $"\t{watch.Elapsed}";
+                            time += $" afterSchemaValidate-{watch.Elapsed.TotalMilliseconds}";
                         }
 
                         var content = ConvertToObjectHelper.ConvertToDynamic(obj);
