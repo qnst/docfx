@@ -22,6 +22,9 @@ namespace Microsoft.Docs.Build
         {
             try
             {
+                Console.WriteLine("#####################################################################################################################");
+                Console.WriteLine("this is from REGRESSION branch");
+                Console.WriteLine("#####################################################################################################################");
                 return Run(args);
             }
             catch (Exception ex)
