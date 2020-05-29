@@ -114,32 +114,18 @@ namespace Microsoft.DocAsCode.Build.SchemaDriven
                     // TODO: Support dynamic in YAML deserializer
                     try
                     {
-                        time += $"beforeDeserialize-{watch.Elapsed.TotalMilliseconds}";
                         // MUST be a dictionary
                         var obj = YamlUtility.Deserialize<Dictionary<string, object>>(file.File);
-                        time += $" afterDeserialize-{watch.Elapsed.TotalMilliseconds}";
 
                         // load overwrite fragments
                         string markdownFragmentsContent = null;
                         var markdownFragmentsFile = file.File + ".md";
                         if (_folderRedirectionManager != null)
                         {
-                            time += $" beforeGetRedirectedPath-{watch.Elapsed.TotalMilliseconds}";
                             markdownFragmentsFile = _folderRedirectionManager.GetRedirectedPath((RelativePath)markdownFragmentsFile).ToString();
-                            time += $" afterGetRedirectedPath-{watch.Elapsed.TotalMilliseconds}";
                         }
-                        time += $" beforeFileExists-{watch.Elapsed.TotalMilliseconds}";
-                        if (EnvironmentContext.FileAbstractLayer.Exists(markdownFragmentsFile))
-                        {
-                            markdownFragmentsContent = EnvironmentContext.FileAbstractLayer.ReadAllText(markdownFragmentsFile);
-                        }
-                        else
-                        {
-                            time += $" beforeSchemaValidate-{watch.Elapsed.TotalMilliseconds}";
-                            // Validate against the schema first, only when markdown fragments don't exist
-                            SchemaValidator.Validate(obj);
-                            time += $" afterSchemaValidate-{watch.Elapsed.TotalMilliseconds}";
-                        }
+                        // Validate against the schema first, only when markdown fragments don't exist
+                        SchemaValidator.Validate(obj);
 
                         var content = ConvertToObjectHelper.ConvertToDynamic(obj);
                         if (!(_schema.MetadataReference.GetValue(content) is IDictionary<string, object> pageMetadata))
@@ -183,7 +169,7 @@ namespace Microsoft.DocAsCode.Build.SchemaDriven
                                 EnvironmentContext.BaseDirectory,
                                 EnvironmentContext.FileAbstractLayer.GetPhysicalPath(markdownFragmentsFile));
                         }
-                        time += $"\t{watch.Elapsed}";
+                        time += $"{watch.Elapsed.TotalMilliseconds}";
                         _checkTime.TryAdd(file.File, time);
 
                         return fm;
